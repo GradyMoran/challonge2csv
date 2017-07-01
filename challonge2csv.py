@@ -1,9 +1,9 @@
 #!/usr/bin/python3
-import csv
 import re
 import sys
 import urllib.request
 
+#challonge doesn't like urllib's default user agent header
 opener=urllib.request.build_opener()
 opener.addheaders=[('User-Agent','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1941.0 Safari/537.36')]
 urllib.request.install_opener(opener)
@@ -12,6 +12,7 @@ with open(sys.argv[1]) as f:
 	tournament_results = []
 	tournament_names = []
 	for line in f:
+		line = line.replace('\n','') + "/standings/"
 		tournament_names.append(line)
 		html_file = urllib.request.urlretrieve(line)[0]
 		with open(html_file, 'r') as t:
@@ -21,7 +22,7 @@ with open(sys.argv[1]) as f:
 		for i in range(0,len(ranks)):
 			k = ranks[i].rfind(">")
 			ranks[i] = int(ranks[i][k+1:])
-		ranks.append(99999)
+		ranks.append(99999) #this makes my rank determining logic below work. fix if you think of a better way to do it
 
 		players = re.findall(r'<span>[^<]*</span>', html_data)
 		for i in range(0,len(players)):
@@ -38,7 +39,7 @@ with open(sys.argv[1]) as f:
 
 		tournament_results.append(tmpdict)
 
-	#get list of all players
+	#get list of all players, sorted without duplicates
 	all_players = list()
 	for d in tournament_results:
 		all_players = all_players + list(d.keys())
@@ -48,7 +49,7 @@ with open(sys.argv[1]) as f:
 	#outputting the tournaments to top line
 	print(",", end="")
 	for t in tournament_names:
-		print(t.replace('\n','') + ",", end="")
+		print(t + ",", end="")
 	print()
 
 	#outputting players and their results

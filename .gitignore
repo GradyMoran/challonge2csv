@@ -1,0 +1,5 @@
+/*.swp
+/*.egg-info
+/env
+/.idea
+__pycache__

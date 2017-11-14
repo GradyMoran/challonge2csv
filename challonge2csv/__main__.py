@@ -3,6 +3,6 @@ def standings2csv():
     main()
 
 
-def player_records2csv():
-    from challonge2csv.player_records2csv import main
+def records2csv():
+    from challonge2csv.records2csv import main
     main()

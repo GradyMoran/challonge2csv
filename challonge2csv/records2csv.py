@@ -3,45 +3,57 @@ import csv
 import json
 import re
 import sys
+import argparse
+import challonge
 from collections import namedtuple
 
 from challonge2csv.utils import fetch, normalize
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-u', '--username', required=True, help="Your challonge username. Does not need to be the same user who created the tournament(s)")
+    parser.add_argument('-a', '--api_key', required=True, help="Your challonge API key. Can be obtained from https://challonge.com/settings/developer")
+    parser.add_argument('-f', '--tournaments_file', required=True, help="A file containing URLs to the challonge tournaments to include, one URL per line.")
+    args = parser.parse_args()
+    
+    challonge.set_credentials(args.username, args.api_key)
+    
     # Define our set named tuples
     Set = namedtuple("Set", "winner loser")
 
-    # Regex to pull out the main data object challonge stores on the page.
-    json_finder = re.compile(r'\[["\']TournamentStore[\'"]\] ?= ?({.*?});')
     player_list = set()
 
     season_sets = list() #season sets is a list of (winner,loser) tuples. There is one tuple per set, for each set in the list of urls provided.
-    with open(sys.argv[1]) as f:
+    with open(args.tournaments_file) as f:
         for line in f:
-            html_body = fetch(line.strip())
+            url = line.strip()
 
             # Use this to have a real python dict to walk through rather than regexing into it repeatedly.
             # In standings we can just html parse, but to find the js object in the JS, we have no choice but
             # to use a regex.
-            tourney = json_finder.search(html_body, re.MULTILINE).group(1)
-            tourney = json.loads(tourney)
-
-            # This just flattens the rounds out. List comprehension reference: https://stackoverflow.com/a/9061815
-            matches = [match for rnd in tourney['matches_by_round'].values() for match in rnd]
-
-
+            subdomain = url[url.find("//")+2:url.find(".")]
+            tourney_name = url[url.rfind("/")+1:]
+            if subdomain == "challonge":
+                query = tourney_name
+            else:
+                query = subdomain + "-" + tourney_name
+            #tournament = challonge.tournaments.show(query)
+            participants = challonge.participants.index(query)
+            matches = challonge.matches.index(query)
+            
+            #create a map of player_id->name since the matches structure below identifies players by their id, not name.
+            player_ids = {}
+            for participant in participants:
+                name = participant['name']
+                player_id = participant['id']
+                player_ids[player_id] = normalize(name)
+            player_list.update(player_ids.values())
+            
             for match in matches:
-                tmp_players = [match['player1']['display_name'], match['player2']['display_name']]
-                tmp_players = list(map(normalize, tmp_players))
-                player_list.update(tmp_players)
-                gc1, gc2 = match['scores']
-
-                # Winner goes first
-                if gc2 > gc1:
-                    gc1, gc2 = gc2, gc1
-                    tmp_players[0], tmp_players[1] = tmp_players[1], tmp_players[0]
-                season_sets.append(Set(winner=tmp_players[0], loser=tmp_players[1]))
+                winner = player_ids[match['winner_id']]
+                loser = player_ids[match['loser_id']]
+                season_sets.append(Set(winner=winner, loser=loser))
 
     player_list = sorted(player_list, key=str.lower)
 
@@ -71,7 +83,7 @@ def main():
     writer = csv.writer(sys.stdout)
     for player in player_list:
         writer.writerow([player])
-        writer.writerow(["player", "wins", "losses"])
+        writer.writerow(["Player:", "Wins:", "Losses:"])
 
         for player2 in season_records[player].keys():
             record = season_records[player][player2]
@@ -81,6 +93,7 @@ def main():
                 writer.writerow([player2] + season_records[player][player2])
 
         writer.writerow([])
+        
 
 if __name__ == '__main__':
     main()

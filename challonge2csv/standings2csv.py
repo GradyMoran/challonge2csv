@@ -18,8 +18,12 @@ def main():
     parser.add_argument('-f', '--tournaments_file', required=True, help="A file containing URLs to the challonge tournaments to include, one URL per line.")
     args = parser.parse_args()
 
-    challonge.set_credentials(args.username, args.api_key)
-    with open(args.tournaments_file) as f:
+    gen_standings(args.username, args.api_key, args.tournaments_file)
+
+def gen_standings(username, api_key, tournaments_file):
+
+    challonge.set_credentials(username, api_key)
+    with open(tournaments_file) as f:
         for line in f:
             url = line.strip()
             subdomain = url[url.find("//")+2:url.find(".")]

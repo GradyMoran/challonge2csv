@@ -16,8 +16,12 @@ def main():
     parser.add_argument('-a', '--api_key', required=True, help="Your challonge API key. Can be obtained from https://challonge.com/settings/developer")
     parser.add_argument('-f', '--tournaments_file', required=True, help="A file containing URLs to the challonge tournaments to include, one URL per line.")
     args = parser.parse_args()
+
+    gen_records(args.username, args.api_key, args.tournaments_file)
+
+def gen_records(username: str, api_key: str, tournaments_file: str):
     
-    challonge.set_credentials(args.username, args.api_key)
+    challonge.set_credentials(username, api_key)
     
     # Define our set named tuples
     Set = namedtuple("Set", "winner loser")
@@ -25,7 +29,7 @@ def main():
     player_list = set()
 
     season_sets = list() #season sets is a list of (winner,loser) tuples. There is one tuple per set, for each set in the list of urls provided.
-    with open(args.tournaments_file) as f:
+    with open(tournaments_file) as f:
         for line in f:
             url = line.strip()
 

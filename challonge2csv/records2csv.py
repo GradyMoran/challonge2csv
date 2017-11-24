@@ -66,7 +66,6 @@ def gen_records_from_str(username: str, api_key: str, tournaments: str):
 
     # Initialize an empty record for each player.
     # A record is a defined as a dict mapping a player name to a 2-tuple of wins/losses
-    #jk
     #  Player Name =>
     #    - Player 2 Name =>
     #      - Wins

@@ -20,29 +20,38 @@ def main():
 
     gen_standings(args.username, args.api_key, args.tournaments_file)
 
-def gen_standings(username, api_key, tournaments_file):
+def gen_standings(username: str, api_key: str, tournaments_file: str):
+    with open(tournaments_file, 'r') as f:
+        tournaments=f.read()
 
+    gen_standings_from_str(username, api_key, tournaments)
+
+def gen_standings_from_str(username: str, api_key: str, tournaments: str):
     challonge.set_credentials(username, api_key)
-    with open(tournaments_file) as f:
-        for line in f:
-            url = line.strip()
-            subdomain = url[url.find("//")+2:url.find(".")]
-            tourney_name = url[url.rfind("/")+1:]
-            tournament_names.append(tourney_name)
-            if subdomain == "challonge":
-                query = tourney_name
-            else:
-                query = subdomain + "-" + tourney_name
-            participants = challonge.participants.index(query)
- 
-            results = {}
-            for participant in participants:
-                name = participant['name']
-                rank = participant['final_rank']
-                results[normalize(name)] = rank
- 
-            tournament_results.append(results)
- 
+
+    for line in tournaments.split('\n'):
+        url = line.strip()
+        if url == "":
+            continue
+        
+        #get the query for challonge API from the user's provided urls
+        subdomain = url[url.find("//")+2:url.find(".")]
+        tourney_name = url[url.rfind("/")+1:]
+        tournament_names.append(tourney_name)
+        if subdomain == "challonge":
+            query = tourney_name
+        else:
+            query = subdomain + "-" + tourney_name
+        participants = challonge.participants.index(query)
+
+        results = {}
+        for participant in participants:
+            name = participant['name']
+            rank = participant['final_rank']
+            results[normalize(name)] = rank
+
+        tournament_results.append(results)
+
    
     players = set()
     for t in tournament_results:

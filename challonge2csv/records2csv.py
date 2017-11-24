@@ -20,7 +20,12 @@ def main():
     gen_records(args.username, args.api_key, args.tournaments_file)
 
 def gen_records(username: str, api_key: str, tournaments_file: str):
-    
+    with open(tournaments_file, 'r') as f:
+        tournaments=f.read()
+
+    gen_records_from_str(username, api_key, tournaments)
+
+def gen_records_from_str(username: str, api_key: str, tournaments: str):  
     challonge.set_credentials(username, api_key)
     
     # Define our set named tuples
@@ -29,41 +34,39 @@ def gen_records(username: str, api_key: str, tournaments_file: str):
     player_list = set()
 
     season_sets = list() #season sets is a list of (winner,loser) tuples. There is one tuple per set, for each set in the list of urls provided.
-    with open(tournaments_file) as f:
-        for line in f:
-            url = line.strip()
+    for line in tournaments.split('\n'):
+        url = line.strip()
+        if url == "":
+            continue
 
-            # Use this to have a real python dict to walk through rather than regexing into it repeatedly.
-            # In standings we can just html parse, but to find the js object in the JS, we have no choice but
-            # to use a regex.
-            subdomain = url[url.find("//")+2:url.find(".")]
-            tourney_name = url[url.rfind("/")+1:]
-            if subdomain == "challonge":
-                query = tourney_name
-            else:
-                query = subdomain + "-" + tourney_name
-            #tournament = challonge.tournaments.show(query)
-            participants = challonge.participants.index(query)
-            matches = challonge.matches.index(query)
-            
-            #create a map of player_id->name since the matches structure below identifies players by their id, not name.
-            player_ids = {}
-            for participant in participants:
-                name = participant['name']
-                player_id = participant['id']
-                player_ids[player_id] = normalize(name)
-            player_list.update(player_ids.values())
-            
-            for match in matches:
-                winner = player_ids[match['winner_id']]
-                loser = player_ids[match['loser_id']]
-                season_sets.append(Set(winner=winner, loser=loser))
+        #get the query for challonge API from the user's provided urls
+        subdomain = url[url.find("//")+2:url.find(".")]
+        tourney_name = url[url.rfind("/")+1:]
+        if subdomain == "challonge":
+            query = tourney_name
+        else:
+            query = subdomain + "-" + tourney_name
+        participants = challonge.participants.index(query)
+        matches = challonge.matches.index(query)
+        
+        #create a map of player_id->name since the matches structure below identifies players by their id, not name.
+        player_ids = {}
+        for participant in participants:
+            name = participant['name']
+            player_id = participant['id']
+            player_ids[player_id] = normalize(name)
+        player_list.update(player_ids.values())
+        
+        for match in matches:
+            winner = player_ids[match['winner_id']]
+            loser = player_ids[match['loser_id']]
+            season_sets.append(Set(winner=winner, loser=loser))
 
     player_list = sorted(player_list, key=str.lower)
 
     # Initialize an empty record for each player.
     # A record is a defined as a dict mapping a player name to a 2-tuple of wins/losses
-    #
+    #jk
     #  Player Name =>
     #    - Player 2 Name =>
     #      - Wins

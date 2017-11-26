@@ -8,9 +8,6 @@ import argparse
  
 from challonge2csv.utils import fetch, normalize
  
-tournament_results = []
-tournament_names = []
- 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-u', '--username', required=True, help="Your challonge username. Does not need to be the same user who created the tournament(s)")
@@ -28,6 +25,8 @@ def gen_standings(username: str, api_key: str, tournaments_file: str):
 
 def gen_standings_from_str(username: str, api_key: str, tournaments: str):
     challonge.set_credentials(username, api_key)
+    tournament_results = []
+    tournament_names = []
 
     for line in tournaments.split('\n'):
         url = line.strip()
@@ -58,13 +57,13 @@ def gen_standings_from_str(username: str, api_key: str, tournaments: str):
         players.update(t.keys())
     players = sorted(players)
  
-    print_results(players, tournament_results)
+    print_results(players, tournament_results, tournament_names)
  
-def print_results(players, tournaments):
+def print_results(players, tournament_results, tournament_names):
     writer = csv.writer(sys.stdout)
     writer.writerow([None] + tournament_names)
     for p in players:
-        row = [p] + list(map(lambda tourney: tourney.get(p), tournaments))
+        row = [p] + list(map(lambda tourney: tourney.get(p), tournament_results))
         writer.writerow(row)
  
 if __name__ == '__main__':

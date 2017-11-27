@@ -21,9 +21,14 @@ To Generate a CSV file from a set of challonge brackets:
 A python script to create an excel file showing wins and losses for each player.
 `python3 records2csv.py -u challonge-username -a challonge-api-key -f challonge_urls.txt > output.csv`
 
+xlsx files can also be created. Run the scripts and see the help dialogs.
 
 TODO:
 
 -put in PyPI
 
--output an xlsx instead of a csv with pretty colors and formatting
+-(xlsx) use colors for good placements in standings, and green/red/yellow for winning/losing/mixed records against certain opponents in records
+
+-(xlsx) link to tournaments for the entries in row 1 of standings (should be easy)
+
+-(xlsx) is it possible to annotate a cell with multiple links to tournaments/matches(if possible?) in which wins/losses to that player happened in records? (should be hard)

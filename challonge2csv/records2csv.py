@@ -135,9 +135,9 @@ def output_xlsx(players, season_records, output_filename):
             if record[0][0] > 0 or record[1][0] > 0:
                 ws.write_row(r, 0, [player2, record[0][0], record[1][0]])
                 if (len(record[0][1]) > 0):
-                    ws.write_comment(r, 1, '\n'.join(record[0][1]))
+                    ws.write_comment(r, 1, '\n'.join(record[0][1]), {'x_scale': 2})
                 if (len(record[1][1]) > 0):
-                    ws.write_comment(r, 2, '\n'.join(record[1][1]))
+                    ws.write_comment(r, 2, '\n'.join(record[1][1]), {'x_scale': 2})
                 r+=1
         r+=1
     wb.close()      

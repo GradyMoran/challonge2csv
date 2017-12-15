@@ -98,7 +98,7 @@ def gen_records_from_str(username: str, api_key: str, tournaments: str):
     for s in season_sets:
         w, l, u = s
         season_records[w][l][0][0] += 1
-        season_records[w][l][0][1].append(u)
+        season_records[w][l][0][1].append(u) #Is it possible to efficently sort as they're inserted?
         season_records[l][w][1][0] += 1
         season_records[l][w][1][1].append(u)
         
@@ -110,7 +110,7 @@ def output_csv(players, season_records, output_file):
         writer.writerow([player])
         writer.writerow(["Player:", "Wins:", "Losses:"])
 
-        for player2 in season_records[player].keys():
+        for player2 in sorted(season_records[player].keys()):
             record = season_records[player][player2]
 
             # We want to prune players who never played.
@@ -128,7 +128,7 @@ def output_xlsx(players, season_records, output_filename):
         r+=1
         ws.write_row(r, 0, ["Player:", "Wins:", "Losses:"])
         r+=1
-        for player2 in season_records[player].keys(): #should be easy to order this explicitly. On home comp, this is ordered, but on server it is not.
+        for player2 in sorted(season_records[player].keys()):
             record = season_records[player][player2]
 
             # We want to prune players who never played.

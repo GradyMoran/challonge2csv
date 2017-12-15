@@ -43,11 +43,11 @@ def gen_records_from_str(username: str, api_key: str, tournaments: str):
     challonge.set_credentials(username, api_key)
     
     # Define our set named tuples
-    Set = namedtuple("Set", "winner loser")
+    Set = namedtuple("Set", "winner loser t_url")
 
     player_list = set()
 
-    season_sets = list() #season sets is a list of (winner,loser) tuples. There is one tuple per set, for each set in the list of urls provided.
+    season_sets = list() #season sets is a list of (winner,loser, url) tuples. There is one tuple per set, for each set in the list of urls provided.
     for line in tournaments.split('\n'):
         url = line.strip()
         if url == "":
@@ -74,16 +74,16 @@ def gen_records_from_str(username: str, api_key: str, tournaments: str):
         for match in matches:
             winner = player_ids[match['winner_id']]
             loser = player_ids[match['loser_id']]
-            season_sets.append(Set(winner=winner, loser=loser))
+            season_sets.append(Set(winner=winner, loser=loser, t_url=url))
 
     player_list = sorted(player_list, key=str.lower)
 
     # Initialize an empty record for each player.
-    # A record is a defined as a dict mapping a player name to a 2-tuple of wins/losses
+    # A record is a defined as a dict mapping a player name to a 2-tuple of 2-tuple: ((wins, [tourney_urls]),(losses, [tourney_urls]))
     #  Player Name =>
     #    - Player 2 Name =>
-    #      - Wins
-    #      - Losses
+    #      - Wins, URLs of tournaments
+    #      - Losses, URLs of tournaments
     #
     # Using this format makes our data manipulation and walking very simple.
 
@@ -93,12 +93,14 @@ def gen_records_from_str(username: str, api_key: str, tournaments: str):
         for p2 in player_list:
             if p2 == p:
                 continue
-            season_records[p][p2] = [0, 0]
+            season_records[p][p2] = [[0,[]], [0, []]]
 
     for s in season_sets:
-        w, l = s
-        season_records[w][l][0] += 1
-        season_records[l][w][1] += 1
+        w, l, u = s
+        season_records[w][l][0][0] += 1
+        season_records[w][l][0][1].append(u)
+        season_records[l][w][1][0] += 1
+        season_records[l][w][1][1].append(u)
         
     return (player_list, season_records)
         
@@ -112,8 +114,8 @@ def output_csv(players, season_records, output_file):
             record = season_records[player][player2]
 
             # We want to prune players who never played.
-            if record[0] > 0 or record[1] > 0:
-                writer.writerow([player2] + season_records[player][player2])
+            if record[0][0] > 0 or record[1][0] > 0:
+                writer.writerow([player2, record[0][0], record[1][0]])
 
         writer.writerow([])
 
@@ -126,12 +128,16 @@ def output_xlsx(players, season_records, output_filename):
         r+=1
         ws.write_row(r, 0, ["Player:", "Wins:", "Losses:"])
         r+=1
-        for player2 in season_records[player].keys():
+        for player2 in season_records[player].keys(): #should be easy to order this explicitly. On home comp, this is ordered, but on server it is not.
             record = season_records[player][player2]
 
             # We want to prune players who never played.
-            if record[0] > 0 or record[1] > 0:
-                ws.write_row(r, 0, [player2] + season_records[player][player2])
+            if record[0][0] > 0 or record[1][0] > 0:
+                ws.write_row(r, 0, [player2, record[0][0], record[1][0]])
+                if (len(record[0][1]) > 0):
+                    ws.write_comment(r, 1, '\n'.join(record[0][1]))
+                if (len(record[1][1]) > 0):
+                    ws.write_comment(r, 2, '\n'.join(record[1][1]))
                 r+=1
         r+=1
     wb.close()      

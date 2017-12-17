@@ -19,7 +19,10 @@ def main():
     if (args.xlsx and args.output_file is None):
         raise Exception("If output file type is xlsx an output file must be specified.")
 
-    (players, tournament_results, tournament_names) = gen_standings(args.username, args.api_key, args.tournaments_file)
+    with open(args.tournaments_file, 'r') as f:
+        tournaments=f.read()
+
+    (players, tournament_results, tournament_names) = gen_standings(args.username, args.api_key, tournaments)
 
     if (args.xlsx):
         output_xlsx(players, tournament_results, tournament_names, args.output_file)#xlsxwriter wants a file name, not a handle.
@@ -32,15 +35,8 @@ def main():
             output_csv(players, tournament_results, tournament_names, sys.stdout)
 
 #returns tuple of players (list), tournament_results (dict), tournament_names (list)
-def gen_standings(username: str, api_key: str, tournaments_file: str):
-    with open(tournaments_file, 'r') as f:
-        tournaments=f.read()
-
-    return gen_standings_from_str(username, api_key, tournaments)
-
-#returns tuple of players (list), tournament_results (dict), tournament_names (list)
 #in this case, tournaments is a multiline string corresponding to the contents of the input file.
-def gen_standings_from_str(username: str, api_key: str, tournaments: str):
+def gen_standings(username: str, api_key: str, tournaments: str):
     challonge.set_credentials(username, api_key)
     tournament_results = []
     tournament_names = []

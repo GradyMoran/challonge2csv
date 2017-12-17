@@ -21,7 +21,10 @@ def main():
     if (args.xlsx and args.output_file is None):
         raise Exception("If output file type is xlsx an output file must be specified.")
 
-    (players, season_records) = gen_records(args.username, args.api_key, args.tournaments_file)
+    with open(args.tournaments_file) as f:
+        tournaments = f.read()
+
+    (players, season_records) = gen_records(args.username, args.api_key, tournaments)
     
     if (args.xlsx):
         output_xlsx(players, season_records, args.output_file)#xlsxwriter wants a file name, not a handle.
@@ -33,13 +36,7 @@ def main():
         else:
             output_csv(players, season_records, sys.stdout)
 
-def gen_records(username: str, api_key: str, tournaments_file: str):
-    with open(tournaments_file, 'r') as f:
-        tournaments=f.read()
-
-    return gen_records_from_str(username, api_key, tournaments)
-
-def gen_records_from_str(username: str, api_key: str, tournaments: str):  
+def gen_records(username: str, api_key: str, tournaments: str):  
     challonge.set_credentials(username, api_key)
     
     # Define our set named tuples

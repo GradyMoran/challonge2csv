@@ -20,12 +20,12 @@ def main():
         raise Exception("If output file type is xlsx an output file must be specified.")
 
     with open(args.tournaments_file, 'r') as f:
-        tournaments=f.read()
+        tournament_urls=f.read()
 
-    (players, tournament_results, tournament_names) = gen_standings(args.username, args.api_key, tournaments)
+    (players, tournament_results, tournament_names) = gen_standings(args.username, args.api_key, tournament_urls)
 
     if (args.xlsx):
-        output_xlsx(players, tournament_results, tournament_names, args.output_file)#xlsxwriter wants a file name, not a handle.
+        output_xlsx(players, tournament_results, tournament_names, tournament_urls, args.output_file)#xlsxwriter wants a file name, not a handle.
     else:
         if (args.output_file is not None):
             f = open(args.output_file, "w+")
@@ -81,10 +81,14 @@ def output_csv(players, tournament_results, tournament_names, output_file):
         writer.writerow(row)
         
 #xlsx takes a filename as an argument, since you can't initialize an xlsxwriter with a handle.
-def output_xlsx(players, tournament_results, tournament_names, output_filename):
+def output_xlsx(players, tournament_results, tournament_names, tournament_urls, output_filename):
     wb = xlsxwriter.Workbook(output_filename)
     ws = wb.add_worksheet()
-    ws.write_row(0, 0, [None] + tournament_names)
+
+    #this should eliminate any cases where url_list has whitespaces and misaligns with tournament_names.
+    url_list = list(filter(lambda s: s.strip() != "", tournament_urls.split('\n'))) 
+    for i in range(len(tournament_names)):
+        ws.write_url(0, i+1, url_list[i], string=tournament_names[i])
     r = 1
     for p in players:
         row = [p] + list(map(lambda tourney: tourney.get(p), tournament_results))

@@ -83,6 +83,12 @@ def output_csv(players, tournament_results, tournament_names, output_file):
 #xlsx takes a filename as an argument, since you can't initialize an xlsxwriter with a handle.
 def output_xlsx(players, tournament_results, tournament_names, tournament_urls, output_filename):
     wb = xlsxwriter.Workbook(output_filename)
+    bronze = wb.add_format()
+    bronze.set_bg_color("#8C7853")
+    silver = wb.add_format()
+    silver.set_bg_color("#808080")
+    gold = wb.add_format()
+    gold.set_bg_color("#CFB53B")
     ws = wb.add_worksheet()
 
     #this should eliminate any cases where url_list has whitespaces and misaligns with tournament_names.
@@ -91,8 +97,17 @@ def output_xlsx(players, tournament_results, tournament_names, tournament_urls, 
         ws.write_url(0, i+1, url_list[i], string=tournament_names[i])
     r = 1
     for p in players:
-        row = [p] + list(map(lambda tourney: tourney.get(p), tournament_results))
-        ws.write_row(r, 0, row)
+        ws.write(r, 0, p)
+        row = list(map(lambda tourney: tourney.get(p), tournament_results))
+        for i in range(len(row)):
+            if row[i] == 1:
+                ws.write(r, i+1, row[i], gold)
+            elif row[i] == 2:
+                ws.write(r, i+1, row[i], silver)
+            elif row[i] == 3:
+                ws.write(r, i+1, row[i], bronze)
+            else:
+                ws.write(r, i+1, row[i])
         r+=1
     wb.close()
  

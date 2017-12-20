@@ -39,14 +39,8 @@ Some effort is made to normalize player names. Capitalization is ignored, and na
 
 -put in PyPI
 
--alphabetize list of opponents in records2csv output
-
 -remove duplicates from list of tournaments, if user shall be silly enough to do so
 
 -replace the csv writer with one that can handle unicode
 
--(xlsx) use colors for good placements in standings, and green/red/yellow for winning/losing/mixed records against certain opponents in records
-
--(xlsx) link to tournaments for the entries in row 1 of standings (should be easy)
-
--(xlsx) annotate cells with multiple links to tournaments/matches in which wins/losses to that player happened in records (should be hard, will require modifying internal data structures)
+-(xlsx) use green/red/yellow for winning/losing/mixed records against certain opponents in records

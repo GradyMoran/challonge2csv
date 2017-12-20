@@ -33,20 +33,8 @@ The list of tournaments in the output of standings2csv.py is in the same order t
 
 Due to python's csv module's incompatability with non-ascii characters on some systems (it appears?) tournaments with player names containing unicode characters may crash the scripts. xlsx mode will work fine.
 
-Some effort is made to normalize player names. Capitalization is ignored, and names with "sponsors" in the form `Team | Player` will count as `player` for the purpose of recording results. If players use multiple names throughout the season the script will just identify them as multiple players.
+Some effort is made to normalize player names. Capitalization is standardized, and names with "sponsors" in the form `Team | player` will count as `Player` for the purpose of recording results. If players use multiple names throughout the season the script will just identify them as multiple players.
 
 ## TODO:
 
 -put in PyPI
-
--alphabetize list of opponents in records2csv output
-
--remove duplicates from list of tournaments, if user shall be silly enough to do so
-
--replace the csv writer with one that can handle unicode
-
--(xlsx) use colors for good placements in standings, and green/red/yellow for winning/losing/mixed records against certain opponents in records
-
--(xlsx) link to tournaments for the entries in row 1 of standings (should be easy)
-
--(xlsx) annotate cells with multiple links to tournaments/matches in which wins/losses to that player happened in records (should be hard, will require modifying internal data structures)

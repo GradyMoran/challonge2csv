@@ -7,7 +7,7 @@ import sys
 import xlsxwriter
 
 from collections import namedtuple
-from challonge2csv.utils import normalize
+from challonge2csv.utils import normalize, normalize_urls
 
 def main():
     parser = argparse.ArgumentParser()
@@ -45,20 +45,10 @@ def gen_records(username: str, api_key: str, tournaments: str):
     player_list = set()
 
     season_sets = list() #season sets is a list of (winner,loser, url) tuples. There is one tuple per set, for each set in the list of urls provided.
-    for line in tournaments.split('\n'):
-        url = line.strip()
-        if url == "":
-            continue
-
-        #get the query for challonge API from the user's provided urls
-        subdomain = url[url.find("//")+2:url.find(".")]
-        tourney_name = url[url.rfind("/")+1:]
-        if subdomain == "challonge":
-            query = tourney_name
-        else:
-            query = subdomain + "-" + tourney_name
-        participants = challonge.participants.index(query)
-        matches = challonge.matches.index(query)
+    (tournament_urls, tournament_queries, tournament_names) = normalize_urls(tournaments)
+    for i in range(len(tournament_queries)):
+        participants = challonge.participants.index(tournament_queries[i])
+        matches = challonge.matches.index(tournament_queries[i])
         
         #create a map of player_id->name since the matches structure below identifies players by their id, not name.
         player_ids = {}
@@ -71,7 +61,7 @@ def gen_records(username: str, api_key: str, tournaments: str):
         for match in matches:
             winner = player_ids[match['winner_id']]
             loser = player_ids[match['loser_id']]
-            season_sets.append(Set(winner=winner, loser=loser, t_url=url))
+            season_sets.append(Set(winner=winner, loser=loser, t_url=tournament_urls[i]))
 
     player_list = sorted(player_list, key=str.lower)
 

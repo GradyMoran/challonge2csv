@@ -5,7 +5,7 @@ import csv
 import sys
 import xlsxwriter
  
-from challonge2csv.utils import normalize
+from challonge2csv.utils import normalize_urls, normalize
  
 def main():
     parser = argparse.ArgumentParser()
@@ -20,9 +20,9 @@ def main():
         raise Exception("If output file type is xlsx an output file must be specified.")
 
     with open(args.tournaments_file, 'r') as f:
-        tournament_urls=f.read()
+        tournaments=f.read()
 
-    (players, tournament_results, tournament_names) = gen_standings(args.username, args.api_key, tournament_urls)
+    (players, tournament_results, tournament_urls, tournament_names) = gen_standings(args.username, args.api_key, tournaments)
 
     if (args.xlsx):
         output_xlsx(players, tournament_results, tournament_names, tournament_urls, args.output_file)#xlsxwriter wants a file name, not a handle.
@@ -34,26 +34,13 @@ def main():
         else:
             output_csv(players, tournament_results, tournament_names, sys.stdout)
 
-#returns tuple of players (list), tournament_results (dict), tournament_names (list)
+#returns tuple of players (list), tournament_results (list of dicts of name keys and rank values. one dict per tournament), tournament_urls (list), tournament_names (list)
 #in this case, tournaments is a multiline string corresponding to the contents of the input file.
 def gen_standings(username: str, api_key: str, tournaments: str):
     challonge.set_credentials(username, api_key)
     tournament_results = []
-    tournament_names = []
-
-    for line in tournaments.split('\n'):
-        url = line.strip()
-        if url == "":
-            continue
-        
-        #get the query for challonge API from the user's provided urls
-        subdomain = url[url.find("//")+2:url.find(".")]
-        tourney_name = url[url.rfind("/")+1:]
-        tournament_names.append(tourney_name)
-        if subdomain == "challonge":
-            query = tourney_name
-        else:
-            query = subdomain + "-" + tourney_name
+    (tournament_urls, tournament_queries, tournament_names) = normalize_urls(tournaments)
+    for query in tournament_queries:
         participants = challonge.participants.index(query)
 
         results = {}
@@ -61,16 +48,14 @@ def gen_standings(username: str, api_key: str, tournaments: str):
             name = participant['name']
             rank = participant['final_rank']
             results[normalize(name)] = rank
-
         tournament_results.append(results)
-
    
     players = set()
     for t in tournament_results:
         players.update(t.keys())
     players = sorted(players)
  
-    return (players, tournament_results, tournament_names)
+    return (players, tournament_results, tournament_urls, tournament_names)
 
 #output_csv takes a handle as an argument, which allows you to write to either stdout or a file easily.
 def output_csv(players, tournament_results, tournament_names, output_file):
@@ -91,10 +76,8 @@ def output_xlsx(players, tournament_results, tournament_names, tournament_urls, 
     gold.set_bg_color("#CFB53B")
     ws = wb.add_worksheet()
 
-    #this should eliminate any cases where url_list has whitespaces and misaligns with tournament_names.
-    url_list = list(filter(lambda s: s.strip() != "", tournament_urls.split('\n'))) 
     for i in range(len(tournament_names)):
-        ws.write_url(0, i+1, url_list[i], string=tournament_names[i])
+        ws.write_url(0, i+1, tournament_urls[i], string=tournament_names[i])
     r = 1
     for p in players:
         ws.write(r, 0, p)
@@ -110,6 +93,6 @@ def output_xlsx(players, tournament_results, tournament_names, tournament_urls, 
                 ws.write(r, i+1, row[i])
         r+=1
     wb.close()
- 
+
 if __name__ == '__main__':
     main()

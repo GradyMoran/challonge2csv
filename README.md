@@ -38,7 +38,3 @@ Some effort is made to normalize player names. Capitalization is standardized, a
 ## TODO:
 
 -put in PyPI
-
--replace the csv writer with one that can handle unicode
-
--(xlsx) use green/red/yellow for winning/losing/mixed records against certain opponents in records

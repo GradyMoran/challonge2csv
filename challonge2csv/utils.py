@@ -26,9 +26,10 @@ def normalize_urls(tournament_urls: str):
         else:
             query = subdomain + "-" + tourney_name
 
-        if query in final_names:
+        if tourney_name in final_names:
             continue
         else:
+            print(tourney_name)
             final_urls.append(url)
             final_queries.append(query)
             final_names.append(tourney_name)

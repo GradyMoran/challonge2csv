@@ -7,7 +7,7 @@ setup(
     version='0.0.1',
     description='A python module to create an excel file showing tournament placings.',
     license='',
-    install_requires=['pychal==1.8.1', 'xlsxwriter'],
+    install_requires=['pychal==1.8.1', 'xlsxwriter', 'unicodecsv'],
     packages=['challonge2csv'],
     entry_points={
         'console_scripts': [

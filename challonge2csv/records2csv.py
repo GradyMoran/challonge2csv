@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import argparse
 import challonge
-import csv
+import unicodecsv
 import re
 import sys
 import xlsxwriter
@@ -30,7 +30,7 @@ def main():
         output_xlsx(players, season_records, args.output_file)#xlsxwriter wants a file name, not a handle.
     else:
         if (args.output_file is not None):
-            f = open(args.output_file, "w+")
+            f = open(args.output_file, "wb+")
             output_csv(players, season_records, f)
             f.close()
         else:
@@ -92,7 +92,7 @@ def gen_records(username: str, api_key: str, tournaments: str):
     return (player_list, season_records)
         
 def output_csv(players, season_records, output_file):
-    writer = csv.writer(output_file)
+    writer = unicodecsv.writer(output_file)
     for player in players:
         writer.writerow([player])
         writer.writerow(["Player:", "Wins:", "Losses:"])

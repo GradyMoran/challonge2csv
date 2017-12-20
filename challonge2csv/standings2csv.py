@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import argparse
 import challonge
-import csv
+import unicodecsv
 import sys
 import xlsxwriter
  
@@ -28,7 +28,7 @@ def main():
         output_xlsx(players, tournament_results, tournament_names, tournament_urls, args.output_file)#xlsxwriter wants a file name, not a handle.
     else:
         if (args.output_file is not None):
-            f = open(args.output_file, "w+")
+            f = open(args.output_file, "wb+")
             output_csv(players, tournament_results, tournament_names, f)
             f.close()
         else:
@@ -59,7 +59,7 @@ def gen_standings(username: str, api_key: str, tournaments: str):
 
 #output_csv takes a handle as an argument, which allows you to write to either stdout or a file easily.
 def output_csv(players, tournament_results, tournament_names, output_file):
-    writer = csv.writer(output_file)
+    writer = unicodecsv.writer(output_file)
     writer.writerow([None] + tournament_names)
     for p in players:
         row = [p] + list(map(lambda tourney: tourney.get(p), tournament_results))

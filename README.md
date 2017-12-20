@@ -33,7 +33,7 @@ The list of tournaments in the output of standings2csv.py is in the same order t
 
 Due to python's csv module's incompatability with non-ascii characters on some systems (it appears?) tournaments with player names containing unicode characters may crash the scripts. xlsx mode will work fine.
 
-Some effort is made to normalize player names. Capitalization is ignored, and names with "sponsors" in the form `Team | Player` will count as `player` for the purpose of recording results. If players use multiple names throughout the season the script will just identify them as multiple players.
+Some effort is made to normalize player names. Capitalization is standardized, and names with "sponsors" in the form `Team | player` will count as `Player` for the purpose of recording results. If players use multiple names throughout the season the script will just identify them as multiple players.
 
 ## TODO:
 

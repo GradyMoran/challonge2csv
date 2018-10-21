@@ -12,13 +12,27 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-u', '--username', required=True, help="Your challonge username. Does not need to be the same user who created the tournament(s)")
     parser.add_argument('-a', '--api_key', required=True, help="Your challonge API key. Can be obtained from https://challonge.com/settings/developer")
-    parser.add_argument('-f', '--tournaments_file', required=True, help="A file containing URLs to the challonge tournaments to include, one URL per line.")
+    parser.add_argument('-p', '--previous_tournaments', required=True, help="A comma-separated string of previous tournaments to look for conflicting matchups in")
+    parser.add_argument('-n', '--new_tournament', required=True, help="The URL of the new tournament")
     args = parser.parse_args()
 
+    #todo, parse the csv of previous tournaments
+    old_matchups = old_matchups_from_str(args.username, args.api_key, args.previous_tournaments)
+    new_matchups = new_matchups_from_str(args.username, args.api_key, args.new_tournament)
+    print("new_matchups: ")
+    print(new_matchups)
+    print(old_matchups)
+
+    c = 0
     for line in conflicts(old_matchups, new_matchups):
+        c += 1
         print(line)
 
+    if c == 0:
+        print("No conflicts.")
+
 def new_matchups_from_str(username: str, api_key: str, url: str):
+    challonge.set_credentials(username, api_key)
     #so the top n players get a bye, where n is the smallest number s.t. n+t=2^k, where t is the toal number of players, and k is an integer. Or if n = 0, everyone fights in round one.
     subdomain = url[url.find("//")+2:url.find(".")]
     tourney_name = url[url.rfind("/")+1:]
@@ -32,14 +46,20 @@ def new_matchups_from_str(username: str, api_key: str, url: str):
     for participant in challonge.participants.index(query): #doesn't like this
         participants.append(participant['name'])
 
-    round_one_participants = len(participant_seeds) - stupid_func(len(participant_seeds))
+    round_one_participants = len(participants) - stupid_func(len(participants))
 
     round_one_matchups = set()
-    round_one_players = round_one_participants[(-1*round_one_participants):]
+    round_one_players = participants[(-1*round_one_participants):]
     i = 0 
-    j = len(round_one_players)
+    j = len(round_one_players)-1
     while i < j:
-        round_one_matchups.add(frozenset([round_one_players[i], round_one_players[j]]))
+        player_one = normalize(round_one_players[i])
+        player_two = normalize(round_one_players[j])
+        if player_two < player_one:
+            player_one, player_two = player_two, player_one
+        round_one_matchups.add(frozenset([player_one, player_two]))
+        i+=1
+        j-=1
 
     return round_one_matchups
 
@@ -61,8 +81,9 @@ def old_matchups_from_str(username: str, api_key: str, tournaments: str):
     challonge.set_credentials(username, api_key)
 
     old_matches = set() #set of tuples of (players set, date string)
-    print(type(old_matches))
-    for line in tournaments.split('\n'):
+    #print(type(old_matches))
+    #for line in tournaments.split('\n'):
+    for line in tournaments.split(','):
         url = line.strip()
         if url == "":
             continue
@@ -74,6 +95,8 @@ def old_matchups_from_str(username: str, api_key: str, tournaments: str):
             query = tourney_name
         else:
             query = subdomain + "-" + tourney_name
+        tmp_tournament = challonge.tournaments.show(query)
+        match_date = tmp_tournament['started_at'].strftime("%b %d, %Y")
         participants = challonge.participants.index(query)
         matches = challonge.matches.index(query)
         
@@ -85,9 +108,25 @@ def old_matchups_from_str(username: str, api_key: str, tournaments: str):
             player_ids[player_id] = normalize(name)
 
         for match in matches:
-            old_matches.add((frozenset([player_ids[match['player1_id']], player_ids[match['player2_id']]]), match['started_at'].strftime("%b %d, %Y")))
+            #print(match)
+            #old_matches.add((frozenset([player_ids[match['player1_id']], player_ids[match['player2_id']]]), match['started_at'].strftime("%b %d, %Y")))
+            player_one = normalize(player_ids[match['player1_id']])
+            player_two = normalize(player_ids[match['player2_id']])
+            if player_two < player_one:
+                player_one, player_two = player_two, player_one 
+            old_matches.add((frozenset([player_one, player_two]), match_date))
+
 
     return old_matches
-   
+
+def conflicts(old_matches, new_matches):
+    ret = []
+    for omatch in old_matches:
+        for nmatch in new_matches:
+            if omatch[0] == nmatch:
+                tmp = list(nmatch)
+                ret.append("conflict: " + tmp[0] + " played " + tmp[1] + " on " + omatch[1])
+    return ret
+ 
 if __name__ == '__main__':
     main()
